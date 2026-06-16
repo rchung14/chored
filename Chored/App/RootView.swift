@@ -18,7 +18,7 @@ struct RootView: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { Task { await session.handleForeground() } }
             }
-            .onReceive(NotificationCenter.default.publisher(for: AppDelegate.didReceiveRemoteChange)) { note in
+            .onReceive(NotificationCenter.default.publisher(for: .choredRemoteChange)) { note in
                 if note.object is URL { selectedTab = 0 }   // deep link → Calendar
                 refreshToken = UUID()
                 Task { await session.handleForeground() }

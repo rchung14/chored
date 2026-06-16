@@ -2,13 +2,17 @@ import UIKit
 import UserNotifications
 import CloudKit
 
+extension Notification.Name {
+    /// Posted when a CloudKit silent push arrives or an invite share is
+    /// accepted, so the app can re-sync. File-scoped (nonisolated) so it can be
+    /// referenced from both main-actor and nonisolated delegate callbacks.
+    static let choredRemoteChange = Notification.Name("chored.didReceiveRemoteChange")
+}
+
 /// Remote-notification registration only. No business logic. Sync and routing
 /// are handled by SwiftUI/`SessionViewModel`; here we just register for APNs and
 /// forward CloudKit silent pushes as an in-process notification.
 final class AppDelegate: NSObject, UIApplicationDelegate {
-
-    /// Posted when a CloudKit silent push arrives, so the app can re-sync.
-    static let didReceiveRemoteChange = Notification.Name("chored.didReceiveRemoteChange")
 
     func application(
         _ application: UIApplication,
@@ -19,12 +23,18 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 
-    func application(
+    // `nonisolated` + completion-handler (synchronous) form: UIKit invokes this
+    // from a non-isolated context, so staying off the main actor and avoiding an
+    // async hop means the non-Sendable `userInfo` never crosses an actor
+    // boundary. We don't read `userInfo`; posting to NotificationCenter is
+    // thread-safe.
+    nonisolated func application(
         _ application: UIApplication,
-        didReceiveRemoteNotification userInfo: [AnyHashable: Any]
-    ) async -> UIBackgroundFetchResult {
-        NotificationCenter.default.post(name: Self.didReceiveRemoteChange, object: nil)
-        return .newData
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        NotificationCenter.default.post(name: .choredRemoteChange, object: nil)
+        completionHandler(.newData)
     }
 
     func application(
@@ -44,7 +54,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         Task {
             let container = CKContainer(identifier: Constants.cloudContainerID)
             _ = try? await container.accept(metadata)
-            NotificationCenter.default.post(name: Self.didReceiveRemoteChange, object: nil)
+            NotificationCenter.default.post(name: .choredRemoteChange, object: nil)
         }
     }
 }
@@ -64,8 +74,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        NotificationCenter.default.post(
-            name: Self.didReceiveRemoteChange, object: Constants.dayDeepLink
-        )
+        NotificationCenter.default.post(name: .choredRemoteChange, object: Constants.dayDeepLink)
     }
 }
