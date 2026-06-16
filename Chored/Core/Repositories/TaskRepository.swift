@@ -138,7 +138,7 @@ final class TaskRepository: TaskRepositorying {
         let saved = try await persist(transformed, forcePending: !online)
 
         if online {
-            try? await cloud.save(log: log)
+            _ = try? await cloud.save(log: log)
         }
         return saved
     }

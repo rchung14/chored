@@ -245,8 +245,8 @@ final class CloudKitService: CloudKitServicing {
 
     private func fetchExistingShare(in zone: CKRecordZone.ID) async throws -> CKShare? {
         let recordZone = try await privateDB.recordZone(for: zone)
-        guard let shareID = recordZone.share else { return nil }
-        let record = try await privateDB.record(for: shareID)
+        guard let shareReference = recordZone.share else { return nil }
+        let record = try await privateDB.record(for: shareReference.recordID)
         return record as? CKShare
     }
 
