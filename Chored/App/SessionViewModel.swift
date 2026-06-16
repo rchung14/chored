@@ -59,16 +59,15 @@ final class SessionViewModel: ObservableObject {
             }
 
         case .noAccount, .restricted, .unknown:
-            // Local-only fallback: if we already have a cached identity, keep
-            // running fully offline rather than blocking the user.
-            if let cached = userStore.userRecordName, userStore.hasDisplayName {
+            // Local-first: iCloud is optional. Establish a device-local identity
+            // so the full app is usable offline (per the local-first
+            // requirement). Sharing, multi-device sync, and remote push stay
+            // gated behind a real iCloud account and simply remain inactive
+            // here — they are additive, not required for core operation.
+            if userStore.hasDisplayName, let cached = userStore.userRecordName {
                 phase = .ready(user: User(recordName: cached, displayName: userStore.displayName!))
                 await afterReady()
-            } else if availability == .noAccount {
-                phase = .iCloudUnavailable
             } else {
-                // Unknown/restricted without a cached identity: allow a local
-                // device-scoped identity so the app is usable without iCloud.
                 let localID = userStore.userRecordName ?? "local-\(UUID().uuidString)"
                 userStore.userRecordName = localID
                 if userStore.hasDisplayName {

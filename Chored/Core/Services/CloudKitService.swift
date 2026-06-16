@@ -53,12 +53,16 @@ protocol CloudKitServicing {
 /// Concrete CloudKit implementation.
 final class CloudKitService: CloudKitServicing {
 
-    private let container: CKContainer
+    private let containerID: String
+    // Created lazily and only after the entitlement check passes. Constructing
+    // CKContainer(identifier:) without the matching iCloud entitlement traps
+    // (uncatchable), which would break local-only / free-account builds.
+    private lazy var container: CKContainer = CKContainer(identifier: containerID)
     private var privateDB: CKDatabase { container.privateCloudDatabase }
     private var sharedDB: CKDatabase { container.sharedCloudDatabase }
 
     init(containerID: String = Constants.cloudContainerID) {
-        self.container = CKContainer(identifier: containerID)
+        self.containerID = containerID
     }
 
     // MARK: - Availability
