@@ -1,0 +1,73 @@
+# ── Project-specific (per request) ─────────────────────────────
+DESIGN.md
+CLAUDE-FABLE-5.md
+
+# ── Secrets / credentials (never commit) ───────────────────────
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.p8                 # APNs / App Store Connect auth keys
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+secrets.xcconfig
+Secrets.xcconfig
+**/*.secret.*
+GoogleService-Info.plist
+ServiceAccount*.json
+
+# ── macOS ──────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# ── Xcode build artifacts ──────────────────────────────────────
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Xcode user-specific state ──────────────────────────────────
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# ── Generated Xcode project (built from project.yml via XcodeGen) ─
+Chored.xcodeproj/
+
+# ── Swift Package Manager ──────────────────────────────────────
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# ── CocoaPods / Carthage (if ever added) ───────────────────────
+Pods/
+Carthage/Build/
+
+# ── Fastlane (if ever added) ───────────────────────────────────
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# ── Misc / logs ────────────────────────────────────────────────
+*.log
+*.tmp
