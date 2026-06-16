@@ -1,4 +1,4 @@
-    import WidgetKit
+import WidgetKit
 import SwiftUI
 
 /// One timeline entry: a snapshot of today's incomplete tasks plus the assignee
