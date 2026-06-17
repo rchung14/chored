@@ -90,7 +90,7 @@ private struct DisplayNamePromptView: View {
     private func save() { Task { await session.saveDisplayName(name) } }
 }
 
-/// Two-tab shell: Calendar + Groups.
+/// Three-tab shell: Calendar · Tasks · Groups.
 private struct MainTabView: View {
     let currentUser: User
     @Binding var selectedTab: Int
@@ -102,9 +102,13 @@ private struct MainTabView: View {
                 .tabItem { Label("Calendar", systemImage: "calendar") }
                 .tag(0)
 
+            TaskListView(container: container, currentUser: currentUser)
+                .tabItem { Label("Tasks", systemImage: "checklist") }
+                .tag(1)
+
             GroupListView(container: container, currentUser: currentUser)
                 .tabItem { Label("Groups", systemImage: "person.2") }
-                .tag(1)
+                .tag(2)
         }
     }
 }

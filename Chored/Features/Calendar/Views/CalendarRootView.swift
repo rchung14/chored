@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Segmented Day | Month | Year container. Hosts the FAB and task-creation
-/// sheet, and owns the calendar + task view models.
+/// Segmented Day | Month container. Hosts the FAB and task-creation sheet, and
+/// owns the calendar + task view models.
 struct CalendarRootView: View {
 
     let currentUser: User
@@ -9,7 +9,7 @@ struct CalendarRootView: View {
     @StateObject private var taskVM: TaskViewModel
 
     enum Mode: String, CaseIterable, Identifiable {
-        case day = "Day", month = "Month", year = "Year"
+        case day = "Day", month = "Month"
         var id: String { rawValue }
     }
     @State private var mode: Mode = .day
@@ -41,6 +41,14 @@ struct CalendarRootView: View {
                     .pickerStyle(.segmented)
                     .padding(.horizontal, Theme.Spacing.md)
 
+                    if calendarVM.groups.count > 1 {
+                        GroupFilterMenu(
+                            options: calendarVM.groups.map { .init(id: $0.id, name: $0.name) },
+                            selectedID: $calendarVM.selectedGroupID
+                        )
+                        .padding(.horizontal, Theme.Spacing.md)
+                    }
+
                     content
                 }
                 .padding(.top, Theme.Spacing.sm)
@@ -52,15 +60,11 @@ struct CalendarRootView: View {
             }
             .navigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                if calendarVM.groups.count > 1 {
-                    ToolbarItem(placement: .topBarTrailing) { groupMenu }
-                }
-            }
             .sheet(isPresented: $showingCreate) {
-                if let group = calendarVM.creationGroup {
+                if !calendarVM.groups.isEmpty {
                     TaskCreationView(
-                        group: group,
+                        groups: calendarVM.groups,
+                        defaultGroupID: calendarVM.selectedGroupID,
                         currentUser: currentUser,
                         defaultDate: calendarVM.selectedDate,
                         viewModel: taskVM
@@ -85,21 +89,7 @@ struct CalendarRootView: View {
                 DayView(viewModel: calendarVM, taskViewModel: taskVM)
             case .month:
                 MonthView(viewModel: calendarVM) { mode = .day }
-            case .year:
-                YearView(viewModel: calendarVM) { mode = .month }
             }
-        }
-    }
-
-    private var groupMenu: some View {
-        Menu {
-            Button("All groups") { calendarVM.selectedGroupID = nil }
-            ForEach(calendarVM.groups) { group in
-                Button(group.name) { calendarVM.selectedGroupID = group.id }
-            }
-        } label: {
-            Image(systemName: "line.3.horizontal.decrease.circle")
-                .accessibilityLabel("Filter by group")
         }
     }
 
@@ -107,7 +97,6 @@ struct CalendarRootView: View {
         switch mode {
         case .day: return calendarVM.selectedDate.formatted(date: .abbreviated, time: .omitted)
         case .month: return calendarVM.selectedDate.formatted(.dateTime.month(.wide).year())
-        case .year: return calendarVM.selectedDate.formatted(.dateTime.year())
         }
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-/// Aggregates tasks across the user's groups for the calendar's Day/Month/Year
+/// Aggregates tasks across the user's groups for the calendar's Day and Month
 /// views. Depends on the task + group repositories. No SwiftUI/UIKit types.
 @MainActor
 final class CalendarViewModel: ObservableObject {
@@ -79,21 +79,5 @@ final class CalendarViewModel: ObservableObject {
             if !presets.isEmpty { map[day] = presets }
         }
         return map
-    }
-
-    /// Task-count density per month for the year containing `year`.
-    func density(forMonthsIn year: Date) -> [Int: Int] {
-        var counts: [Int: Int] = [:]
-        let cal = Calendar.current
-        let startOfYear = year.startOfYear
-        for monthIndex in 0..<12 {
-            guard let monthDate = cal.date(byAdding: .month, value: monthIndex, to: startOfYear) else { continue }
-            var total = 0
-            for dayOffset in 0..<monthDate.daysInMonth {
-                total += tasks(on: monthDate.startOfMonth.adding(days: dayOffset)).count
-            }
-            counts[monthIndex + 1] = total
-        }
-        return counts
     }
 }

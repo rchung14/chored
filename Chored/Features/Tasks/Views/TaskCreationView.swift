@@ -4,13 +4,16 @@ import SwiftUI
 /// custom color. One primary action (Create).
 struct TaskCreationView: View {
 
-    let group: ChoreGroup
+    let groups: [ChoreGroup]
     let currentUser: User
     let defaultDate: Date
     @ObservedObject var viewModel: TaskViewModel
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
+
+    // Group (required when there is more than one)
+    @State private var groupID: String
 
     // Core fields
     @State private var name = ""
@@ -43,20 +46,29 @@ struct TaskCreationView: View {
 
     private let weekdaySymbols = Calendar.current.shortWeekdaySymbols // Sun...Sat
 
-    init(group: ChoreGroup, currentUser: User, defaultDate: Date, viewModel: TaskViewModel) {
-        self.group = group
+    init(groups: [ChoreGroup], defaultGroupID: String?, currentUser: User,
+         defaultDate: Date, viewModel: TaskViewModel) {
+        self.groups = groups
         self.currentUser = currentUser
         self.defaultDate = defaultDate
         self.viewModel = viewModel
+        // Auto-select when there's only one group; otherwise require an explicit
+        // choice (pre-filled from the active calendar filter if there is one).
+        let initialGroup = groups.count == 1 ? (groups.first?.id ?? "") : (defaultGroupID ?? "")
+        _groupID = State(initialValue: initialGroup)
         _assignee = State(initialValue: currentUser.recordName)
         _startDate = State(initialValue: defaultDate)
         _endDate = State(initialValue: defaultDate.adding(days: 7))
         _pickerDate = State(initialValue: defaultDate)
     }
 
+    /// The currently chosen group, if any.
+    private var selectedGroup: ChoreGroup? { groups.first { $0.id == groupID } }
+
     var body: some View {
         NavigationStack {
             Form {
+                if groups.count > 1 { groupSection }
                 detailsSection
                 colorSection
                 assigneeSection
@@ -73,13 +85,34 @@ struct TaskCreationView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") { create() }
-                        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || isWorking)
+                        .disabled(
+                            name.trimmingCharacters(in: .whitespaces).isEmpty
+                            || selectedGroup == nil
+                            || isWorking
+                        )
                 }
             }
         }
     }
 
     // MARK: Sections
+
+    private var groupSection: some View {
+        Section {
+            Picker("Group", selection: $groupID) {
+                Text("Select a group").tag("")
+                ForEach(groups) { Text($0.name).tag($0.id) }
+            }
+        } header: {
+            sectionHeader("Group")
+        } footer: {
+            if selectedGroup == nil {
+                Text("Choose which group this task belongs to.")
+                    .choredCaption()
+                    .foregroundStyle(Color(.secondaryLabel))
+            }
+        }
+    }
 
     private var detailsSection: some View {
         Section {
@@ -124,15 +157,18 @@ struct TaskCreationView: View {
         }
     }
 
+    @ViewBuilder
     private var assigneeSection: some View {
-        Section {
-            Picker("Assignee", selection: $assignee) {
-                ForEach(group.memberRecordNames, id: \.self) { rn in
-                    Text(viewModel.displayName(for: rn)).tag(rn)
+        if let group = selectedGroup {
+            Section {
+                Picker("Assignee", selection: $assignee) {
+                    ForEach(group.memberRecordNames, id: \.self) { rn in
+                        Text(viewModel.displayName(for: rn)).tag(rn)
+                    }
                 }
+            } header: {
+                sectionHeader("Assignee")
             }
-        } header: {
-            sectionHeader("Assignee")
         }
     }
 
@@ -218,7 +254,7 @@ struct TaskCreationView: View {
             sectionHeader("Rotation")
         } footer: {
             if isAlternating {
-                Text("The assignee rotates through all \(group.memberRecordNames.count) members each time the task is completed.")
+                Text("The assignee rotates through all \(selectedGroup?.memberRecordNames.count ?? 0) members each time the task is completed.")
                     .choredCaption()
             }
         }
@@ -245,6 +281,7 @@ struct TaskCreationView: View {
     // MARK: Create
 
     private func create() {
+        guard let group = selectedGroup else { return }
         isWorking = true
         let task = ChoreTask(
             groupID: group.id,
