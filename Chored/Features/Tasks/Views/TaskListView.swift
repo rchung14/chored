@@ -53,6 +53,7 @@ struct TaskListView: View {
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.md)
+                .padding(.top, Theme.Spacing.lg)
                 .padding(.bottom, Theme.Spacing.sm)
                 .background(Color(.systemBackground))
             }
