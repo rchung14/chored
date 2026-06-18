@@ -6,6 +6,8 @@ struct TaskDetailView: View {
 
     @State var task: ChoreTask
     let group: ChoreGroup?
+    /// The occurrence the detail was opened from (used for "delete this event").
+    var occurrenceDate: Date = Date()
     @ObservedObject var viewModel: TaskViewModel
 
     @Environment(\.dismiss) private var dismiss
@@ -60,12 +62,18 @@ struct TaskDetailView: View {
             }
 
             Section {
-                Button {
-                    complete()
-                } label: {
-                    Label("Mark Complete", systemImage: "checkmark.circle")
+                // Only the assigned roommate can mark their task complete.
+                if viewModel.canComplete(task) {
+                    Button {
+                        complete()
+                    } label: {
+                        Label("Mark Complete", systemImage: "checkmark.circle")
+                    }
+                    .disabled(task.isComplete)
+                } else {
+                    Label("\(assigneeName)'s task", systemImage: "person")
+                        .foregroundStyle(Color(.secondaryLabel))
                 }
-                .disabled(task.isComplete)
 
                 if viewModel.canDelete(task, group: group) {
                     Button(role: .destructive) {
@@ -77,9 +85,18 @@ struct TaskDetailView: View {
         .navigationTitle(task.name)
         .navigationBarTitleDisplayMode(.large)
         .task { await viewModel.loadLogs(for: task) }
-        .alert("Delete \(task.name)?", isPresented: $confirmingDelete) {
-            Button("Delete", role: .destructive) {
-                Task { await viewModel.delete(task); dismiss() }
+        .confirmationDialog("Delete \(task.name)?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            if task.isRecurring {
+                Button("Delete this event", role: .destructive) {
+                    Task { await viewModel.deleteOccurrence(task, on: occurrenceDate); dismiss() }
+                }
+                Button("Delete all events", role: .destructive) {
+                    Task { await viewModel.delete(task); dismiss() }
+                }
+            } else {
+                Button("Delete", role: .destructive) {
+                    Task { await viewModel.delete(task); dismiss() }
+                }
             }
             Button("Cancel", role: .cancel) {}
         }

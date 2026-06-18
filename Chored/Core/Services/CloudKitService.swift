@@ -304,6 +304,7 @@ final class CloudKitService: CloudKitServicing {
         record["isRecurring"] = (task.isRecurring ? 1 : 0) as CKRecordValue
         record["weekdayMask"] = task.weekdayMask as CKRecordValue?
         record["recurringDates"] = task.recurringDates as CKRecordValue?
+        record["excludedDates"] = task.excludedDates as CKRecordValue?
         record["isAlternating"] = (task.isAlternating ? 1 : 0) as CKRecordValue
         record["alternatingOrder"] = task.alternatingOrder as CKRecordValue
         record["startDate"] = task.startDate as CKRecordValue
@@ -339,6 +340,7 @@ final class CloudKitService: CloudKitServicing {
             isRecurring: (record["isRecurring"] as? Int ?? 0) == 1,
             weekdayMask: record["weekdayMask"] as? Int,
             recurringDates: record["recurringDates"] as? [Date],
+            excludedDates: record["excludedDates"] as? [Date],
             isAlternating: (record["isAlternating"] as? Int ?? 0) == 1,
             alternatingOrder: record["alternatingOrder"] as? [String] ?? [],
             startDate: record["startDate"] as? Date ?? Date(),

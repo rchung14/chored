@@ -28,6 +28,9 @@ struct ChoreTask: Identifiable, Equatable, Hashable, Codable {
     var weekdayMask: Int?
     /// Explicit recurrence dates (additive list). Nil when using `weekdayMask`.
     var recurringDates: [Date]?
+    /// Specific occurrence dates removed from a recurring series ("delete this
+    /// event"). The series otherwise continues.
+    var excludedDates: [Date]?
 
     // MARK: Alternating assignment
 
@@ -58,6 +61,7 @@ struct ChoreTask: Identifiable, Equatable, Hashable, Codable {
         isRecurring: Bool = false,
         weekdayMask: Int? = nil,
         recurringDates: [Date]? = nil,
+        excludedDates: [Date]? = nil,
         isAlternating: Bool = false,
         alternatingOrder: [String] = [],
         startDate: Date = Date(),
@@ -75,6 +79,7 @@ struct ChoreTask: Identifiable, Equatable, Hashable, Codable {
         self.isRecurring = isRecurring
         self.weekdayMask = weekdayMask
         self.recurringDates = recurringDates
+        self.excludedDates = excludedDates
         self.isAlternating = isAlternating
         self.alternatingOrder = alternatingOrder
         self.startDate = startDate

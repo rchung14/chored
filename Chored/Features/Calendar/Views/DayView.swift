@@ -47,6 +47,7 @@ struct DayView: View {
                     TaskDetailView(
                         task: task,
                         group: viewModel.groups.first { $0.id == task.groupID },
+                        occurrenceDate: viewModel.selectedDate,
                         viewModel: taskViewModel
                     )
                 } label: {
@@ -56,7 +57,8 @@ struct DayView: View {
                 .listRowInsets(EdgeInsets(top: Theme.Spacing.xs, leading: Theme.Spacing.md,
                                           bottom: Theme.Spacing.xs, trailing: Theme.Spacing.md))
                 .swipeActions(edge: .leading) {
-                    if !task.isComplete {
+                    // Only the assigned roommate can complete their task.
+                    if !task.isComplete && taskViewModel.canComplete(task) {
                         Button { complete(task) } label: { Label("Done", systemImage: "checkmark") }
                             .tint(Color(.systemBlue))
                     }

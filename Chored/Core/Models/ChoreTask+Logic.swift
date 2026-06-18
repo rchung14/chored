@@ -10,6 +10,9 @@ extension ChoreTask {
     func occurs(on day: Date) -> Bool {
         let target = day.startOfDay
 
+        if let excluded = excludedDates, excluded.contains(where: { $0.isSameDay(as: target) }) {
+            return false
+        }
         if target < startDate.startOfDay { return false }
         if let end = endDate, target > end.startOfDay { return false }
 
@@ -40,13 +43,16 @@ extension ChoreTask {
             return dates
                 .map(\.startOfDay)
                 .filter { $0 >= reference.startOfDay }
+                .filter { d in !(excludedDates?.contains { $0.isSameDay(as: d) } ?? false) }
                 .min()
         }
 
         if weekdayMask != nil {
             var cursor = max(reference.startOfDay, startDate.startOfDay)
-            // Scan at most one full cycle (8 days covers any weekday rule).
-            for _ in 0..<8 {
+            // Scan up to a year ahead so excluded occurrences are skipped to the
+            // next valid one; stop at the end date if there is one.
+            for _ in 0..<366 {
+                if let end = endDate, cursor > end.startOfDay { break }
                 if occurs(on: cursor) { return cursor }
                 cursor = cursor.adding(days: 1)
             }

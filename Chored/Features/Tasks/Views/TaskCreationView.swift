@@ -35,6 +35,8 @@ struct TaskCreationView: View {
 
     // Alternating
     @State private var isAlternating = false
+    /// Members participating in the rotation (subset of the group, in group order).
+    @State private var rotationMembers: Set<String> = []
 
     // Estimated interval
     @State private var hasInterval = false
@@ -65,6 +67,11 @@ struct TaskCreationView: View {
     /// The currently chosen group, if any.
     private var selectedGroup: ChoreGroup? { groups.first { $0.id == groupID } }
 
+    /// Selected rotation members in group order.
+    private var orderedRotation: [String] {
+        (selectedGroup?.memberRecordNames ?? []).filter { rotationMembers.contains($0) }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -77,6 +84,15 @@ struct TaskCreationView: View {
                 alternatingSection
                 intervalSection
             }
+            .onChange(of: isAlternating) { _, on in
+                if on, rotationMembers.isEmpty {
+                    rotationMembers = Set(selectedGroup?.memberRecordNames ?? [])
+                }
+            }
+            .onChange(of: groupID) { _, _ in
+                // Reset rotation selection to the new group's members.
+                rotationMembers = Set(selectedGroup?.memberRecordNames ?? [])
+            }
             .navigationTitle("New Task")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -88,6 +104,7 @@ struct TaskCreationView: View {
                         .disabled(
                             name.trimmingCharacters(in: .whitespaces).isEmpty
                             || selectedGroup == nil
+                            || (isAlternating && orderedRotation.isEmpty)
                             || isWorking
                         )
                 }
@@ -249,12 +266,31 @@ struct TaskCreationView: View {
 
     private var alternatingSection: some View {
         Section {
-            Toggle("Alternating between members", isOn: $isAlternating)
+            Toggle("Alternating between members", isOn: $isAlternating.animation(.easeInOut(duration: 0.2)))
+            if isAlternating, let group = selectedGroup {
+                ForEach(group.memberRecordNames, id: \.self) { rn in
+                    Button {
+                        if rotationMembers.contains(rn) { rotationMembers.remove(rn) }
+                        else { rotationMembers.insert(rn) }
+                    } label: {
+                        HStack {
+                            Text(viewModel.displayName(for: rn))
+                                .choredBody()
+                                .foregroundStyle(Color(.label))
+                            Spacer()
+                            if rotationMembers.contains(rn) {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(Color(.systemBlue))
+                            }
+                        }
+                    }
+                }
+            }
         } header: {
             sectionHeader("Rotation")
         } footer: {
             if isAlternating {
-                Text("The assignee rotates through all \(selectedGroup?.memberRecordNames.count ?? 0) members each time the task is completed.")
+                Text("Choose who shares this task. The assignee rotates through the \(orderedRotation.count) selected member\(orderedRotation.count == 1 ? "" : "s") each time it's completed.")
                     .choredCaption()
             }
         }
@@ -288,12 +324,12 @@ struct TaskCreationView: View {
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
             description: description,
             colorPreset: colorPreset,
-            assigneeRecordName: isAlternating ? (group.memberRecordNames.first ?? assignee) : assignee,
+            assigneeRecordName: isAlternating ? (orderedRotation.first ?? assignee) : assignee,
             isRecurring: isRecurring,
             weekdayMask: (isRecurring && recurrenceMode == .weekdays) ? weekdayMask : nil,
             recurringDates: (isRecurring && recurrenceMode == .dates) ? specificDates : nil,
             isAlternating: isAlternating,
-            alternatingOrder: isAlternating ? group.memberRecordNames : [],
+            alternatingOrder: isAlternating ? orderedRotation : [],
             startDate: startDate,
             endDate: hasEndDate ? endDate : nil,
             estimatedIntervalDays: hasInterval ? intervalDays : nil

@@ -40,20 +40,45 @@ struct TaskListView: View {
                     listContent
                 }
             }
-            .navigationTitle("Tasks")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .principal) { EmptyView() } }
             .safeAreaInset(edge: .top) {
-                if viewModel.groups.count > 1 {
-                    GroupFilterMenu(
-                        options: viewModel.groups.map { .init(id: $0.id, name: $0.name) },
-                        selectedID: $viewModel.selectedGroupID
-                    )
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.sm)
-                    .background(Color(.systemBackground))
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    brandHeader
+                    if viewModel.groups.count > 1 {
+                        GroupFilterMenu(
+                            options: viewModel.groups.map { .init(id: $0.id, name: $0.name) },
+                            selectedID: $viewModel.selectedGroupID
+                        )
+                    }
                 }
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.sm)
+                .background(Color(.systemBackground))
             }
             .task { await viewModel.load() }
         }
+    }
+
+    /// Chored wordmark + current date (the page's brand header).
+    private var brandHeader: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: "checklist")
+                .font(.title.weight(.semibold))
+                .foregroundStyle(Color(.label))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Chored")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(Color(.label))
+                Text(Date().formatted(date: .complete, time: .omitted))
+                    .choredSubheadline()
+                    .foregroundStyle(Color(.secondaryLabel))
+            }
+            Spacer()
+        }
+        .padding(.top, Theme.Spacing.sm)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Chored, \(Date().formatted(date: .complete, time: .omitted))")
     }
 
     private var listContent: some View {
@@ -65,6 +90,7 @@ struct TaskListView: View {
                             TaskDetailView(
                                 task: task,
                                 group: viewModel.groups.first { $0.id == task.groupID },
+                                occurrenceDate: section.date,
                                 viewModel: taskVM
                             )
                         } label: {

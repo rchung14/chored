@@ -63,9 +63,26 @@ final class TaskViewModel: ObservableObject {
         }
     }
 
+    /// Delete the entire task (all occurrences).
     func delete(_ task: ChoreTask) async {
         do {
             try await taskRepository.delete(task)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Delete a single occurrence of a recurring task by excluding that date.
+    /// The series otherwise continues. No-op for non-recurring tasks.
+    func deleteOccurrence(_ task: ChoreTask, on date: Date) async {
+        guard task.isRecurring else { await delete(task); return }
+        var updated = task
+        var excluded = updated.excludedDates ?? []
+        let day = date.startOfDay
+        if !excluded.contains(where: { $0.isSameDay(as: day) }) { excluded.append(day) }
+        updated.excludedDates = excluded
+        do {
+            _ = try await taskRepository.update(updated)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -76,5 +93,10 @@ final class TaskViewModel: ObservableObject {
         if task.assigneeRecordName == currentUser.recordName { return true }
         if let group, group.isOwner(currentUser.recordName) { return true }
         return false
+    }
+
+    /// Completion is only allowed by the roommate the task is assigned to.
+    func canComplete(_ task: ChoreTask) -> Bool {
+        task.assigneeRecordName == currentUser.recordName
     }
 }

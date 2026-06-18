@@ -17,6 +17,7 @@ final class SDChoreTask {
     var isRecurring: Bool
     var weekdayMask: Int?
     var recurringDates: [Date]?
+    var excludedDates: [Date]?
 
     var isAlternating: Bool
     var alternatingOrder: [String]
@@ -41,6 +42,7 @@ final class SDChoreTask {
         isRecurring: Bool,
         weekdayMask: Int?,
         recurringDates: [Date]?,
+        excludedDates: [Date]?,
         isAlternating: Bool,
         alternatingOrder: [String],
         startDate: Date,
@@ -59,6 +61,7 @@ final class SDChoreTask {
         self.isRecurring = isRecurring
         self.weekdayMask = weekdayMask
         self.recurringDates = recurringDates
+        self.excludedDates = excludedDates
         self.isAlternating = isAlternating
         self.alternatingOrder = alternatingOrder
         self.startDate = startDate
@@ -114,6 +117,7 @@ extension SDChoreTask {
             isRecurring: isRecurring,
             weekdayMask: weekdayMask,
             recurringDates: recurringDates,
+            excludedDates: excludedDates,
             isAlternating: isAlternating,
             alternatingOrder: alternatingOrder,
             startDate: startDate,
@@ -134,6 +138,7 @@ extension SDChoreTask {
         isRecurring = task.isRecurring
         weekdayMask = task.weekdayMask
         recurringDates = task.recurringDates
+        excludedDates = task.excludedDates
         isAlternating = task.isAlternating
         alternatingOrder = task.alternatingOrder
         startDate = task.startDate
@@ -155,6 +160,7 @@ extension SDChoreTask {
             isRecurring: task.isRecurring,
             weekdayMask: task.weekdayMask,
             recurringDates: task.recurringDates,
+            excludedDates: task.excludedDates,
             isAlternating: task.isAlternating,
             alternatingOrder: task.alternatingOrder,
             startDate: task.startDate,
